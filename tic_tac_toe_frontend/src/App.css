@@ -1,104 +1,230 @@
-/* CSS Variables for Theme Management */
+/* Theme: light modern
+   Accents: #3b82f6 (primary) and #06b6d4 (success)
+   Background: #f9fafb, Surface: #ffffff, Text: #111827
+*/
 :root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #282c34;
-  --text-secondary: #61dafb;
-  --border-color: #e9ecef;
-  --button-bg: #007bff;
-  --button-text: #ffffff;
+  --bg: #f9fafb;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #64748b;
+
+  --primary: #3b82f6;
+  --success: #06b6d4;
+  --danger: #ef4444;
+
+  --border: rgba(17, 24, 39, 0.12);
+  --shadow: 0 18px 45px rgba(17, 24, 39, 0.08);
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+
+  --square-size: 92px;
 }
 
-[data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #282c34;
-  --text-primary: #ffffff;
-  --text-secondary: #61dafb;
-  --border-color: #404040;
-  --button-bg: #0056b3;
-  --button-text: #ffffff;
+* {
+  box-sizing: border-box;
 }
 
 .App {
+  min-height: 100vh;
+  background: radial-gradient(
+      1200px 600px at 10% 10%,
+      rgba(59, 130, 246, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at 90% 20%,
+      rgba(6, 182, 212, 0.12),
+      transparent 55%
+    ),
+    var(--bg);
+  color: var(--text);
+}
+
+.ttt-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 16px;
+}
+
+.ttt-card {
+  width: min(520px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 26px 22px 22px;
+}
+
+.ttt-header {
   text-align: center;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  margin-bottom: 14px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.ttt-title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: var(--bg-secondary);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
-  position: relative;
-}
-
-.App-link {
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
-}
-
-.theme-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
+.ttt-subtitle {
+  margin: 8px 0 0;
+  color: var(--muted);
   font-size: 14px;
+  line-height: 1.5;
+}
+
+.ttt-status {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 18px;
+}
+
+.ttt-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.10),
+    rgba(6, 182, 212, 0.10)
+  );
+  color: var(--text);
   font-weight: 600;
+  font-size: 14px;
+}
+
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, var(--square-size));
+  grid-template-rows: repeat(3, var(--square-size));
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+
+.ttt-square {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, rgba(249, 250, 251, 0.9));
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.06);
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+  position: relative;
+  outline: none;
 }
 
-.theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+.ttt-square:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(17, 24, 39, 0.10);
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
-.theme-toggle:active {
+.ttt-square:focus-visible {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.22),
+    0 14px 28px rgba(17, 24, 39, 0.10);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.ttt-square.is-filled {
+  cursor: default;
+}
+
+.ttt-square.is-filled:hover {
+  transform: none;
+}
+
+.ttt-square.is-winning {
+  border-color: rgba(6, 182, 212, 0.65);
+  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.18),
+    0 14px 28px rgba(17, 24, 39, 0.10);
+}
+
+.ttt-mark {
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.ttt-footer {
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+  padding-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.ttt-announcement {
+  text-align: center;
+}
+
+.ttt-hint {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ttt-result-title {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.ttt-result-subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ttt-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.ttt-reset {
+  appearance: none;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.14), rgba(6, 182, 212, 0.14));
+  color: var(--text);
+  font-weight: 700;
+  padding: 11px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.08);
+  min-width: 140px;
+}
+
+.ttt-reset:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(17, 24, 39, 0.12);
+}
+
+.ttt-reset:active {
   transform: translateY(0);
+  opacity: 0.95;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+@media (max-width: 420px) {
+  :root {
+    --square-size: 82px;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-/* Responsive design for mobile */
-@media (max-width: 768px) {
-  .theme-toggle {
-    top: 10px;
-    right: 10px;
-    padding: 8px 16px;
-    font-size: 12px;
+  .ttt-card {
+    padding: 22px 16px 18px;
+  }
+
+  .ttt-title {
+    font-size: 26px;
   }
 }
