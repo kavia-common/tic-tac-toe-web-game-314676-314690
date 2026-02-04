@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
+
+const THEME_STORAGE_KEY = "ttt_theme";
 
 const LINES = [
   // Rows
@@ -20,6 +22,40 @@ function App() {
   /** Tic Tac Toe game UI (3x3), including turn status, win/draw detection, result announcement, and reset. */
   const [board, setBoard] = useState(() => Array(9).fill(null));
   const [xIsNext, setXIsNext] = useState(true);
+
+  const [theme, setTheme] = useState(() => {
+    // Prefer saved choice, otherwise follow OS preference.
+    try {
+      const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {
+      // Ignore storage errors (e.g., disabled storage).
+    }
+
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+
+    return prefersDark ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    // Bind theme to the root for CSS variable switching and better native form theming.
+    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.style.colorScheme = theme;
+
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore storage errors.
+    }
+  }, [theme]);
+
+  // PUBLIC_INTERFACE
+  const setAppTheme = (nextTheme) => {
+    /** Set the app theme (light or dark) and persist it locally. */
+    setTheme(nextTheme);
+  };
 
   const analysis = useMemo(() => {
     const winnerInfo = calculateWinner(board);
@@ -64,7 +100,25 @@ function App() {
       <main className="ttt-page">
         <section className="ttt-card" aria-label="Tic Tac Toe">
           <header className="ttt-header">
-            <h1 className="ttt-title">Tic Tac Toe</h1>
+            <div className="ttt-header-top">
+              <h1 className="ttt-title">Tic Tac Toe</h1>
+
+              <div className="ttt-theme" aria-label="Theme selector">
+                <label className="ttt-theme-label" htmlFor="ttt-theme-select">
+                  Theme
+                </label>
+                <select
+                  id="ttt-theme-select"
+                  className="ttt-theme-select"
+                  value={theme}
+                  onChange={(e) => setAppTheme(e.target.value)}
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+
             <p className="ttt-subtitle">A classic 3×3 game for two players</p>
           </header>
 
