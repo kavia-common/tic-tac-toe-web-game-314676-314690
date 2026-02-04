@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const THEME_STORAGE_KEY = "ttt_theme";
+const SCORE_STORAGE_KEY = "ttt_scoreboard_v1";
 
 const LINES = [
   // Rows
@@ -17,11 +18,39 @@ const LINES = [
   [2, 4, 6],
 ];
 
+function loadScoreboard() {
+  try {
+    const raw = window.localStorage.getItem(SCORE_STORAGE_KEY);
+    if (!raw) return { X: 0, O: 0, draws: 0 };
+    const parsed = JSON.parse(raw);
+    return {
+      X: Number.isFinite(parsed?.X) ? parsed.X : 0,
+      O: Number.isFinite(parsed?.O) ? parsed.O : 0,
+      draws: Number.isFinite(parsed?.draws) ? parsed.draws : 0,
+    };
+  } catch {
+    return { X: 0, O: 0, draws: 0 };
+  }
+}
+
+function saveScoreboard(scoreboard) {
+  try {
+    window.localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(scoreboard));
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
 // PUBLIC_INTERFACE
 function App() {
-  /** Tic Tac Toe game UI (3x3), including turn status, win/draw detection, result announcement, and reset. */
+  /** Tic Tac Toe game UI (3x3), including turn status, win/draw detection, scoreboard, and reset controls. */
   const [board, setBoard] = useState(() => Array(9).fill(null));
   const [xIsNext, setXIsNext] = useState(true);
+
+  const [scoreboard, setScoreboard] = useState(() => loadScoreboard());
+
+  // Tracks whether the current round has already been counted into the scoreboard.
+  const roundCountedRef = useRef(false);
 
   const [theme, setTheme] = useState(() => {
     // Prefer saved choice, otherwise follow OS preference.
@@ -51,6 +80,11 @@ function App() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    // Persist scoreboard for the session/user.
+    saveScoreboard(scoreboard);
+  }, [scoreboard]);
+
   // PUBLIC_INTERFACE
   const setAppTheme = (nextTheme) => {
     /** Set the app theme (light or dark) and persist it locally. */
@@ -76,6 +110,19 @@ function App() {
     };
   }, [board, xIsNext]);
 
+  useEffect(() => {
+    // Update scoreboard exactly once per round when the game ends.
+    if (!analysis.isGameOver || roundCountedRef.current) return;
+
+    roundCountedRef.current = true;
+    setScoreboard((prev) => {
+      if (analysis.winner === "X") return { ...prev, X: prev.X + 1 };
+      if (analysis.winner === "O") return { ...prev, O: prev.O + 1 };
+      if (analysis.isDraw) return { ...prev, draws: prev.draws + 1 };
+      return prev;
+    });
+  }, [analysis.isGameOver, analysis.isDraw, analysis.winner]);
+
   const handleSquareClick = (idx) => {
     // Ignore clicks on filled squares or after game ends.
     if (analysis.isGameOver || board[idx] !== null) return;
@@ -89,11 +136,23 @@ function App() {
   };
 
   // PUBLIC_INTERFACE
-  const resetGame = () => {
-    /** Reset the game back to the initial empty board with X to play first. */
+  const resetRound = () => {
+    /** Reset the board for a new round while keeping the scoreboard. */
     setBoard(Array(9).fill(null));
     setXIsNext(true);
+    roundCountedRef.current = false;
   };
+
+  // PUBLIC_INTERFACE
+  const resetScores = () => {
+    /** Reset the scoreboard counts back to 0 (also starts a fresh round). */
+    setScoreboard({ X: 0, O: 0, draws: 0 });
+    setBoard(Array(9).fill(null));
+    setXIsNext(true);
+    roundCountedRef.current = false;
+  };
+
+  const primaryCtaLabel = analysis.isGameOver ? "Next round" : "Reset round";
 
   return (
     <div className="App">
@@ -122,14 +181,28 @@ function App() {
             <p className="ttt-subtitle">A classic 3×3 game for two players</p>
           </header>
 
+          <div className="ttt-scoreboard" aria-label="Scoreboard">
+            <div className="ttt-scoreboard-item">
+              <div className="ttt-scoreboard-label">X wins</div>
+              <div className="ttt-scoreboard-value">{scoreboard.X}</div>
+            </div>
+            <div className="ttt-scoreboard-item">
+              <div className="ttt-scoreboard-label">Draws</div>
+              <div className="ttt-scoreboard-value">{scoreboard.draws}</div>
+            </div>
+            <div className="ttt-scoreboard-item">
+              <div className="ttt-scoreboard-label">O wins</div>
+              <div className="ttt-scoreboard-value">{scoreboard.O}</div>
+            </div>
+          </div>
+
           <div className="ttt-status" role="status" aria-live="polite">
             <span className="ttt-status-pill">{analysis.status}</span>
           </div>
 
           <div className="ttt-board" role="grid" aria-label="Game board">
             {board.map((value, idx) => {
-              const isWinning =
-                analysis.winningLine?.includes(idx) ?? false;
+              const isWinning = analysis.winningLine?.includes(idx) ?? false;
 
               const ariaLabel = value
                 ? `Square ${idx + 1}, ${value}`
@@ -161,20 +234,17 @@ function App() {
               {analysis.isGameOver ? (
                 <div className="ttt-result">
                   <div className="ttt-result-title">
-                    {analysis.winner
-                      ? `${analysis.winner} wins!`
-                      : "Draw game"}
+                    {analysis.winner ? `${analysis.winner} wins!` : "Draw game"}
                   </div>
                   <div className="ttt-result-subtitle">
                     {analysis.winner
-                      ? "Nice play—reset to start a new round."
-                      : "No moves left—reset to try again."}
+                      ? "Score updated—start the next round when ready."
+                      : "Score updated—start the next round when ready."}
                   </div>
                 </div>
               ) : (
                 <div className="ttt-hint">
-                  Click a square to place{" "}
-                  <strong>{analysis.nextPlayer}</strong>.
+                  Click a square to place <strong>{analysis.nextPlayer}</strong>.
                 </div>
               )}
             </div>
@@ -183,9 +253,19 @@ function App() {
               <button
                 type="button"
                 className="ttt-reset"
-                onClick={resetGame}
+                onClick={resetRound}
+                aria-label={primaryCtaLabel}
               >
-                Reset
+                {primaryCtaLabel}
+              </button>
+
+              <button
+                type="button"
+                className="ttt-reset ttt-reset-secondary"
+                onClick={resetScores}
+                aria-label="Reset scores"
+              >
+                Reset scores
               </button>
             </div>
           </div>
